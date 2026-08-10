@@ -1,0 +1,7 @@
+Hi {{ name }},
+
+Your RepoInfo verification code is: {{ otp }}
+
+This code expires in {{ expire_minutes }} minutes.
+
+— The RepoInfo Team

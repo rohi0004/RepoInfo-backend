@@ -1,0 +1,68 @@
+version: "3.9"
+
+name: repoinfo-prod
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    env_file:
+      - ../.env.production
+    restart: unless-stopped
+    depends_on: [postgres, redis]
+    deploy:
+      resources:
+        limits:
+          cpus: "2.00"
+          memory: 2G
+
+  worker:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    command: celery -A app.workers.celery_app.celery_app worker --loglevel=INFO --concurrency=4 -Q default,analysis,embeddings,email,exports
+    env_file:
+      - ../.env.production
+    restart: unless-stopped
+    depends_on: [postgres, redis]
+
+  beat:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    command: celery -A app.workers.celery_app.celery_app beat --loglevel=INFO
+    env_file:
+      - ../.env.production
+    restart: unless-stopped
+    depends_on: [redis]
+
+  nginx:
+    image: nginx:1.27-alpine
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certs:/etc/nginx/certs:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: unless-stopped
+    depends_on: [api]
+
+  postgres:
+    image: postgres:16-alpine
+    env_file:
+      - ../.env.production
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-}
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:

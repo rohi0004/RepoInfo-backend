@@ -1,0 +1,30 @@
+[project]
+name = "repoinfo-backend"
+version = "1.0.0"
+description = "RepoInfo AI-powered repository analysis platform backend"
+requires-python = ">=3.13,<3.14"
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+exclude = ["migrations"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "ASYNC", "S"]
+ignore = ["B008", "S101"]
+
+[tool.black]
+line-length = 100
+target-version = ["py313"]
+
+[tool.mypy]
+python_version = "3.13"
+plugins = ["pydantic.mypy"]
+ignore_missing_imports = true
+disallow_untyped_defs = false
+exclude = ["migrations"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+env_files = [".env.test"]
