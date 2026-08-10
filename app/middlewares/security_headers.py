@@ -17,7 +17,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             "geolocation=(), microphone=(), camera=(), payment=(), usb=()"
         )
         response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
-        response.headers["Cross-Origin-Resource-Policy"] = "same-site"
+        response.headers["Cross-Origin-Resource-Policy"] = "cross-origin"
         if settings.is_production:
             response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains; preload"
         if request.url.path in {"/docs", "/docs/oauth2-redirect", "/redoc"}:
