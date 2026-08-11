@@ -1,4 +1,4 @@
-"""Export tasks: build an artifact for a repository report and store it in MinIO."""
+"""Export tasks: build an artifact for a repository report and store it in object storage."""
 
 import io
 import json
@@ -10,7 +10,7 @@ from celery.utils.log import get_task_logger
 from app.database.session import db_session_ctx
 from app.models.enums import ExportStatusEnum
 from app.models.export import Export
-from app.storage.minio_client import minio_client
+from app.storage.s3_client import s3_client
 from app.workers.celery_app import celery_app
 from app.workers.utils import run_async
 
@@ -31,7 +31,7 @@ async def _build(job_id: str, repo_id: str) -> str | None:
     }
     payload = json.dumps(body, indent=2).encode()
     key = f"reports/{repo_id}/{job_id}.json"
-    await minio_client.upload_stream(
+    await s3_client.upload_stream(
         kind="exports",
         key=key,
         stream=io.BytesIO(payload),

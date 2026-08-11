@@ -14,7 +14,7 @@ async def _embed_files(repo_id: str, paths: list[str]) -> int:
     count = 0
     for path in paths:
         try:
-            # Content is fetched lazily in a follow-up when files are cached to MinIO;
+            # Content is fetched lazily in a follow-up when files are cached to storage;
             # here we accept `path` as content stand-in for smaller repos.
             await embedding_service.embed_and_store(
                 repository_id=repo_id,

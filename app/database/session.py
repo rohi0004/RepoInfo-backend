@@ -15,6 +15,12 @@ engine = create_async_engine(
     max_overflow=settings.DATABASE_MAX_OVERFLOW,
     pool_pre_ping=True,
     poolclass=NullPool if settings.APP_ENV == "test" else None,
+    # Fails fast on a misconfigured/unreachable host instead of hanging and
+    # tying up a worker until the OS-level TCP timeout kicks in.
+    connect_args={
+        "timeout": 5,
+        **({"ssl": True} if settings.POSTGRES_SSL_MODE != "disable" else {}),
+    },
 )
 
 AsyncSessionLocal = async_sessionmaker(

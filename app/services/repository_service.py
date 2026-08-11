@@ -396,9 +396,9 @@ class RepositoryService:
 
         download_url: str | None = None
         if job.storage_key:
-            from app.storage.minio_client import minio_client
+            from app.storage.s3_client import s3_client
 
-            download_url = await minio_client.presigned_get(kind="exports", key=job.storage_key)
+            download_url = await s3_client.presigned_get(kind="exports", key=job.storage_key)
         return ExportOut(
             id=job.id,
             status=job.status.value,

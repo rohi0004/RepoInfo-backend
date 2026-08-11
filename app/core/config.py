@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     POSTGRES_USER: str = "repoinfo"
     POSTGRES_PASSWORD: str = "repoinfo"
     POSTGRES_DB: str = "repoinfo"
+    POSTGRES_SSL_MODE: Literal["disable", "require"] = "disable"
     DATABASE_POOL_SIZE: int = 20
     DATABASE_MAX_OVERFLOW: int = 10
     DATABASE_ECHO: bool = False
@@ -46,10 +47,13 @@ class Settings(BaseSettings):
 
     @property
     def DATABASE_URL_SYNC(self) -> str:
-        return (
+        url = (
             f"postgresql+psycopg2://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
             f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
         )
+        if self.POSTGRES_SSL_MODE != "disable":
+            url += f"?sslmode={self.POSTGRES_SSL_MODE}"
+        return url
 
     # ---- Redis ----
     REDIS_HOST: str = "localhost"
@@ -105,18 +109,13 @@ class Settings(BaseSettings):
     RATE_LIMIT_AUTH: str = "10/minute"
     RATE_LIMIT_AI: str = "30/minute"
 
-    # ---- MinIO / Object storage ----
-    MINIO_ENDPOINT: str = "localhost:9000"
-    MINIO_ACCESS_KEY: str = "repoinfo_admin"
-    MINIO_SECRET_KEY: str = "repoinfo_secret_key"
-    MINIO_SECURE: bool = False
-    MINIO_REGION: str = "us-east-1"
-    MINIO_BUCKET_REPOSITORIES: str = "repositories"
-    MINIO_BUCKET_REPORTS: str = "reports"
-    MINIO_BUCKET_EXPORTS: str = "exports"
-    MINIO_BUCKET_AVATARS: str = "avatars"
-    MINIO_BUCKET_ATTACHMENTS: str = "attachments"
-    MINIO_PRESIGNED_URL_EXPIRE_SECONDS: int = 3600
+    # ---- Object storage (S3-compatible) ----
+    AWS_ENDPOINT_URL_S3: str = "http://localhost:9000"
+    AWS_ACCESS_KEY_ID: str = "repoinfo_admin"
+    AWS_SECRET_ACCESS_KEY: str = "repoinfo_secret_key"
+    AWS_REGION: str = "us-east-1"
+    STORAGE_BUCKET: str = "repoinfo"
+    STORAGE_PRESIGNED_URL_EXPIRE_SECONDS: int = 3600
 
     # ---- Elasticsearch ----
     ELASTICSEARCH_URL: str = "http://localhost:9200"

@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.exceptions import BadRequestError
 from app.models.user import User
 from app.schemas.upload import PresignedUploadRequest, PresignedUploadResponse, UploadedFileOut
-from app.storage.minio_client import minio_client
+from app.storage.s3_client import s3_client
 
 ALLOWED_KINDS = {"attachments", "avatars", "exports", "reports", "repositories"}
 
@@ -25,7 +25,7 @@ class UploadService:
             raise BadRequestError(f"Bucket '{payload.bucket}' is not accessible.")
         safe = PurePosixPath(payload.filename).name
         key = f"users/{user.id}/{uuid.uuid4()}-{safe}"
-        url = await minio_client.presigned_put(kind=payload.bucket, key=key)
+        url = await s3_client.presigned_put(kind=payload.bucket, key=key)
         return PresignedUploadResponse(upload_url=url, storage_key=key, expires_in=3600)
 
     async def upload_attachment(self, user: User, file: UploadFile) -> UploadedFileOut:
@@ -37,10 +37,10 @@ class UploadService:
         safe = PurePosixPath(file.filename or "file").name
         key = f"users/{user.id}/{uuid.uuid4()}-{safe}"
         content_type = file.content_type or "application/octet-stream"
-        await minio_client.upload_bytes(
+        await s3_client.upload_bytes(
             kind="attachments", key=key, data=content, content_type=content_type
         )
-        url = await minio_client.presigned_get(kind="attachments", key=key)
+        url = await s3_client.presigned_get(kind="attachments", key=key)
         return UploadedFileOut(
             storage_key=key, url=url, size_bytes=len(content), content_type=content_type
         )

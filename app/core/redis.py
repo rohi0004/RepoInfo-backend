@@ -4,9 +4,19 @@ from redis.asyncio import ConnectionPool, Redis
 
 from app.core.config import settings
 
-_cache_pool = ConnectionPool.from_url(settings.REDIS_CACHE_URL, decode_responses=True, max_connections=50)
+_cache_pool = ConnectionPool.from_url(
+    settings.REDIS_CACHE_URL,
+    decode_responses=True,
+    max_connections=50,
+    socket_connect_timeout=5,
+    socket_timeout=5,
+)
 _rate_limit_pool = ConnectionPool.from_url(
-    settings.RATE_LIMIT_REDIS_URL, decode_responses=True, max_connections=50
+    settings.RATE_LIMIT_REDIS_URL,
+    decode_responses=True,
+    max_connections=50,
+    socket_connect_timeout=5,
+    socket_timeout=5,
 )
 
 redis_cache = Redis(connection_pool=_cache_pool)

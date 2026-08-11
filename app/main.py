@@ -33,7 +33,7 @@ from app.middlewares import (
     rate_limit_exceeded_handler,
 )
 from app.search.elasticsearch_client import es_client
-from app.storage.minio_client import minio_client
+from app.storage.s3_client import s3_client
 from app.vectorstore.milvus_client import milvus_client
 
 
@@ -57,10 +57,10 @@ async def lifespan(app: FastAPI):
         logger.warning(f"Redis connection failed at startup: {exc}")
 
     try:
-        await minio_client.ensure_buckets()
-        logger.info("MinIO buckets ensured")
+        await s3_client.ensure_bucket()
+        logger.info("Storage bucket ensured")
     except Exception as exc:
-        logger.warning(f"MinIO warm-up failed: {exc}")
+        logger.warning(f"Storage warm-up failed: {exc}")
 
     try:
         await es_client.ensure_indices()

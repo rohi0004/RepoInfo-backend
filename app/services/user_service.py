@@ -21,7 +21,7 @@ from app.schemas.user import (
     UserSettingsOut,
     UserSettingsUpdate,
 )
-from app.storage.minio_client import minio_client
+from app.storage.s3_client import s3_client
 
 
 class UserService:
@@ -60,8 +60,8 @@ class UserService:
         ext = PurePosixPath(file.filename or "avatar").suffix or ".png"
         key = f"users/{user.id}/avatar{ext}"
         content_type = file.content_type or (mimetypes.guess_type(file.filename or "")[0] or "image/png")
-        await minio_client.upload_bytes(kind="avatars", key=key, data=content, content_type=content_type)
-        user.avatar_url = await minio_client.presigned_get(kind="avatars", key=key)
+        await s3_client.upload_bytes(kind="avatars", key=key, data=content, content_type=content_type)
+        user.avatar_url = await s3_client.presigned_get(kind="avatars", key=key)
         await self.db.flush()
         return user
 

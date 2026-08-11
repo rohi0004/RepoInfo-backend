@@ -5,7 +5,7 @@ Enterprise-grade backend for the **RepoInfo** AI-powered repository analysis pla
 - FastAPI + Python 3.13
 - PostgreSQL + SQLAlchemy 2 (async) + Alembic
 - Redis (cache + broker + rate limits + pub/sub)
-- MinIO (object storage), Elasticsearch (keyword search), Milvus (vector search)
+- S3-compatible object storage (Neon storage), Elasticsearch (keyword search), Milvus (vector search)
 - Celery + Beat (analysis, embeddings, exports, email, cleanup)
 - Multi-provider AI (Anthropic Claude, OpenAI, Google Gemini, Ollama, OpenRouter)
 - Prometheus + Grafana metrics, Sentry error tracking, Loguru structured logs
@@ -54,7 +54,7 @@ Enterprise-grade backend for the **RepoInfo** AI-powered repository analysis pla
                           ┌───────────┬─────────────────┴───────┐
                           ▼           ▼                         ▼
                     ┌──────────┐┌──────────┐            ┌────────────┐
-                    │  MinIO   ││   ES     │            │   Milvus   │
+                    │  S3 obj  ││   ES     │            │   Milvus   │
                     │ objects  ││ keyword  │            │  vectors   │
                     └──────────┘└──────────┘            └────────────┘
 ```
@@ -84,7 +84,7 @@ backend/
 │   ├── schemas/                   ← Pydantic v2 request/response models (camelCase)
 │   ├── services/                  ← Business logic (auth, chat, repo, billing…)
 │   ├── search/                    ← Elasticsearch wrapper + index mappings
-│   ├── storage/                   ← MinIO async wrapper
+│   ├── storage/                   ← S3-compatible (boto3) async wrapper
 │   ├── vectorstore/               ← Milvus client + schema/index management
 │   ├── ai/
 │   │   ├── providers/             ← Claude, OpenAI, Gemini, Ollama, OpenRouter
@@ -112,7 +112,7 @@ backend/
 ## Requirements
 
 - **Docker Desktop 4.30+** (with Compose v2) — recommended path.
-- Or **Python 3.13** + local Postgres/Redis/MinIO/Elasticsearch/Milvus if running bare-metal.
+- Or **Python 3.13** + local Postgres/Redis/Elasticsearch/Milvus + a Neon S3-compatible storage bucket if running bare-metal.
 
 ---
 
@@ -124,7 +124,7 @@ cd backend
 # 1. copy the example env; edit as needed
 cp .env.example .env
 
-# 2. bring the whole stack up (api + worker + beat + postgres + redis + minio + es + milvus + nginx)
+# 2. bring the whole stack up (api + worker + beat + postgres + redis + es + milvus + nginx)
 docker compose -f docker/docker-compose.yml up -d --build
 
 # 3. run database migrations
@@ -137,7 +137,6 @@ docker compose -f docker/docker-compose.yml exec api python -m scripts.seed
 Once the stack is up:
 
 - API: <http://localhost:8000> (docs at `/docs`, health at `/health`, metrics at `/metrics`)
-- MinIO console: <http://localhost:9001> (user `repoinfo_admin` / pw `repoinfo_secret_key`)
 - Flower (Celery): <http://localhost:5555>
 - Prometheus: <http://localhost:9090>
 - Grafana: <http://localhost:3001>
@@ -151,7 +150,8 @@ cd backend
 python3.13 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt -r requirements-dev.txt
 
-# Start Postgres/Redis/MinIO/Elasticsearch/Milvus separately (see docker-compose for images).
+# Start Postgres/Redis/Elasticsearch/Milvus separately (see docker-compose for images);
+# object storage points at a Neon S3-compatible bucket, nothing to run locally for it.
 cp .env.development .env
 
 alembic upgrade head
@@ -180,7 +180,7 @@ See [`.env.example`](.env.example) for the exhaustive list. Grouped by concern:
 | JWT            | `JWT_*`, `OTP_*`, `PASSWORD_RESET_TOKEN_EXPIRE_MINUTES`              |
 | OAuth          | `GOOGLE_*`, `GITHUB_*`                                               |
 | Rate limits    | `RATE_LIMIT_DEFAULT`, `RATE_LIMIT_AUTH`, `RATE_LIMIT_AI`              |
-| MinIO          | `MINIO_ENDPOINT`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`, `MINIO_SECURE`, bucket names |
+| Storage        | `AWS_ENDPOINT_URL_S3`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_REGION`, `STORAGE_BUCKET` |
 | Elasticsearch  | `ELASTICSEARCH_URL`, `ELASTICSEARCH_USERNAME`, `ELASTICSEARCH_PASSWORD` |
 | Milvus         | `MILVUS_HOST`, `MILVUS_PORT`, `EMBEDDING_DIMENSION`                  |
 | AI             | `DEFAULT_AI_PROVIDER`, `GEMINI_API_KEY`, `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `OPENROUTER_API_KEY`, `OLLAMA_BASE_URL` |

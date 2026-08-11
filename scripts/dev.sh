@@ -10,7 +10,7 @@ if [[ ! -f .env ]]; then
     cp .env.development .env
 fi
 
-docker compose -f docker/docker-compose.yml up -d postgres redis minio elasticsearch
+docker compose -f docker/docker-compose.yml up -d postgres redis elasticsearch
 
 echo "Waiting for Postgres..."
 until docker compose -f docker/docker-compose.yml exec -T postgres pg_isready -U repoinfo >/dev/null 2>&1; do
