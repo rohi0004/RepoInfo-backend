@@ -17,8 +17,13 @@ engine = create_async_engine(
     poolclass=NullPool if settings.APP_ENV == "test" else None,
     # Fails fast on a misconfigured/unreachable host instead of hanging and
     # tying up a worker until the OS-level TCP timeout kicks in.
+    # `statement_cache_size=0` disables asyncpg prepared-statement caching, which
+    # is required when connecting through a transaction-mode PgBouncer pooler
+    # (e.g. Neon's `-pooler` endpoint). Without this, INSERT-heavy endpoints like
+    # /register raise `asyncpg.exceptions.DuplicatePreparedStatementError`.
     connect_args={
         "timeout": 5,
+        "statement_cache_size": 0,
         **({"ssl": True} if settings.POSTGRES_SSL_MODE != "disable" else {}),
     },
 )

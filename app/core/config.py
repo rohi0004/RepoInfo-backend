@@ -56,6 +56,10 @@ class Settings(BaseSettings):
         return url
 
     # ---- Redis ----
+    # If REDIS_URL is set (e.g. `rediss://default:pwd@host.upstash.io:6379`), it
+    # overrides REDIS_HOST/PORT/PASSWORD. Use this for managed providers such as
+    # Upstash that require TLS and expose a single logical database.
+    REDIS_URL: str | None = None
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379
     REDIS_PASSWORD: str | None = None
@@ -65,6 +69,11 @@ class Settings(BaseSettings):
     REDIS_RATE_LIMIT_DB: int = 3
 
     def _redis_url(self, db: int) -> str:
+        if self.REDIS_URL:
+            from urllib.parse import urlparse, urlunparse
+            parsed = urlparse(self.REDIS_URL)
+            # Managed hosts like Upstash free tier only expose db=0. Force it.
+            return urlunparse(parsed._replace(path="/0"))
         auth = f":{self.REDIS_PASSWORD}@" if self.REDIS_PASSWORD else ""
         return f"redis://{auth}{self.REDIS_HOST}:{self.REDIS_PORT}/{db}"
 
