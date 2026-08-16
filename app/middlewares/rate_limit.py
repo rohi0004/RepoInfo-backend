@@ -23,6 +23,11 @@ limiter = Limiter(
     default_limits=[settings.RATE_LIMIT_DEFAULT],
     headers_enabled=True,
     swallow_errors=True,
+    # Without this, a dead Redis makes slowapi swallow the storage error and skip
+    # setting `request.state.view_rate_limit` — which `headers_enabled` then reads
+    # unconditionally, turning every limited route into a 500. Falling back to
+    # in-memory storage keeps the same limits and keeps the attribute populated.
+    in_memory_fallback_enabled=True,
 )
 
 
